@@ -49,20 +49,20 @@ Run script with ```python inference.py model.h5 project_video.mp4 processed_vide
 
 
 # 3. Training data
-I used all training data provided by Udacity. It is about 25000 64x64x3 images of vehicles and non-vehicles in different lightning settings and configuration. Images are separated into vehicle and non-vehicle classes. I implemented few types of data loading. I tried datagenerators among with loading whole data as numpy array. 
-But for convenience at the end, I stick with the classical approach. Loaded sata was shuffled and split into training and validation sets. Size of the validation set is 25% of data, training was done on about 18750 images.  Half of images was augmented by random upscalling and cropping back to its original size. Resizing was very helpfull to get better results. Without it, my classifier was sometimes unable to keep a track on vehicles in between window sizes. 
+I used all training data provided by Udacity. It is about 25000 64x64x3 images of vehicles and non-vehicles in different lightning settings and configuration. Images are separated into the vehicle and non-vehicle classes. I implemented few types of data loading. I tried datagenerators among with loading whole data as numpy array. 
+But for convenience at the end, I stick with the classical approach. Loaded data was shuffled and split into training and validation sets. Size of the validation set is 25% of data, training was done on about 18750 images.  Half of the images was augmented by random upscaling and cropping back to its original size. Resizing was very helpful to get better results. Without it, my classifier was sometimes unable to keep a track on vehicles in between window sizes. 
 
 
 # 4. HoG Features
-During the feature extraction, program convert all images into yuv colors. I used standard settings from lectures, which get features for 9 directions, have 8 pixels per cell and 2 cells per each block. This settings give us patches of 64x64 pixels. Features were extracted separately for each color channel. If program use HoG features together with color histograms and binned color features, we ravel and concatenate all feature vectors. Because we concatenated features from different domains, we need to normalize data with data scaler. After all images are scaled, scaler is saved into pickle filename - scaler. I also used color histogram and color spatial binning. Final feature vector had a size of 8460. 
+During the feature extraction, program converts all images into yuv colors. I used standard settings from lectures, which get features for 9 directions, have 8 pixels per cell and 2 cells per each block. These settings give us patches of 64x64 pixels. Features were extracted separately for each color channel. If program uses HoG features together with color histograms and binned color features, we ravel and concatenate all feature vectors. Because we concatenated features from different domains, we need to normalize data with data scaler. After all images are scaled, the scaler is saved into pickle filename - scaler. I also used the color histogram and color spatial binning. Final feature vector had a size of 8460. 
 
 
 # 5. Classifier
 
-I used two types of classifier. First is neural network with dense layers, where input is extracted feature vector. Second is convolutional neural network, which uses
+I used two types of a classifier. First is a neural network with dense layers, where an input is extracted feature vector. Second is the convolutional neural network, which uses
 whole image converted to yuv color space and scaled to floats in interval (-1, 1). 
 
-Both classifiers were trained with the batch size of 128 and with the AdamOptimizer. I implemented saving only on best checkpoint together with early stopper. If validation accuracy stops to climb, we exit training proces to prevent further overfitting. Both classifiers achieved validation accuracy over 93%.
+Both classifiers were trained with the batch size of 128 and with the AdamOptimizer. I implemented saving only on best checkpoint together with early stopper. If validation accuracy stops to climb, we exit training process to prevent further overfitting. Both classifiers achieved validation accuracy over 93%.
 
 
 NN model:
@@ -122,23 +122,19 @@ model.add(Activation('softmax'))
 
 # 6. Sliding window search
 Before we start to search for vehicles, we undistort camera frame with function camera_calibration(path). Calibration points are in directory "./calibration".
-Then, undistorted image is converted into YUV. I implemented just naive sliding window search with window sizes of 48, 64, 80, 96, 112 and 128 pixels. I found that overlaps of 0.6 in x and 0.4 in y directions works great. I had some problems to get stable track of car in some scales. Random upscalling of training images during training phase helped us to solve this problem. 
+Then, an undistorted image is converted into YUV. I implemented just naive sliding window search with window sizes of 48, 64, 80, 96, 112 and 128 pixels. I found that overlaps of 0.6 in x and 0.4 in y directions work great. I had some problems to get stable track of car in some scales. Random upscaling of training images during training phase helped us to solve this problem. 
 
-We are searching in the lower half of the picture. We are searching in 606 windows in each frame. 
-I noticed problem of the delay. If some vehicle is moving very fast in the opposite direction, it can take less than 10 frames to reach us and we will not be able to detect it.
-
-
-Searching grid is shown bellow together with some examples of positive detections
+We are searching 606 windows in the lower half of the picture. Windows scales and positions are parallel with lanes. Searching grid is shown below together with some examples of positive detections
 ![grid][grid]
 ![boxes][boxes]
 ![boxes2][boxes2]
 ![boxes3][boxes3]
 
-
+I noticed the problem of the delay. If some vehicle is moving very fast in the opposite direction, it can take less than 10 frames to reach us and we will not be able to detect it.
 
 # 7. Heatmap averaging
-I used list of heatmaps with the depth of 10 frames. In each frame, I treshold heatmap to get rid of false positives and add heatmaps from all frames in buffer.
-Final heatmap was constructed by averaging whole history of frames, then using gaussian blur with kernel size of 15. Finally, blurred heatmap was thresholded again. Main problem of this pipleine section was to come with good threshold, because you can have lot of multiple detections on vehicle in front of us, but just few on vehicle in distance. If you have small threshold, car in the distance is detected fine, but car in front of us will have big bounding box. If the threshold is big, car in the distance can disappear. At the end, after setting up good grid, I selected threshold 1. By averaging last 10 frames, we also have a problem of heatmap drifting. Heatmap is constructed from history, so mean will always be something like 5 frames behind the car itself. 
+I used a list of heatmaps with the depth of 10 frames. In each frame, I threshold heatmap to get rid of false positives and add heatmaps from all frames in the buffer.
+The final heatmap was constructed by averaging the whole history of frames, then using gaussian blur with kernel size of 15. Finally, the blurred heatmap was thresholded again. Main problem of this pipeline section was to come with good threshold. You can have a lot of multiple detections on the vehicle in front of us, but just a few on the vehicle in distance. If you have small threshold, the car in the distance is detected fine, but car in front of us will have a big bounding box. If the threshold is big, a car in the distance can disappear. At the end, after setting up a good grid, I selected threshold 1. By averaging last 10 frames, we also have a problem of heatmap drifting. Heatmap is constructed from history, so mean will always be something like 5 frames behind the car itself. 
 
 ![heatmap][heatmap]
 
@@ -154,9 +150,9 @@ Averaged heatmap is converted into labels - cars. Each bounding box was created 
 
 
 # 7. Final run 
-Final run can bee seen in the video.mp4 file. 
-Even validation accuracy was high for both type of classifiers, real settings shows that CNN works much better than network with HoG features. Since I had big problem to tune HoG classifier in real settings, final video was created with CNN network. 
+The final run can be seen in the video.mp4 file. 
+Even validation accuracy was high for both type of classifiers, real settings show that CNN works much better than network with HoG features. Since I had a big problem to tune HoG classifier in real settings, final video was created with CNN network. 
 
-[![Watch the video](https://github.com/batrlatom/udacityP5/blob/master/outputs/final.jpg?raw=true)](https://github.com/batrlatom/udacityP5/blob/master/outputs/output_video.mp4)
+[![Watch the video]](https://github.com/batrlatom/udacityP5/blob/master/outputs/output_video.mp4)
 
 
