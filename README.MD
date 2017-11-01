@@ -134,7 +134,7 @@ I noticed the problem of the delay. If some vehicle is moving very fast in the o
 
 # 7. Heatmap averaging
 I used a list of heatmaps with the depth of 10 frames. In each frame, I threshold heatmap to get rid of false positives and add heatmaps from all frames in the buffer.
-The final heatmap was constructed by averaging the whole history of frames, then using gaussian blur with kernel size of 15. Finally, the blurred heatmap was thresholded again. Main problem of this pipeline section was to come with good threshold. You can have a lot of multiple detections on the vehicle in front of us, but just a few on the vehicle in distance. If you have small threshold, the car in the distance is detected fine, but car in front of us will have a big bounding box. If the threshold is big, a car in the distance can disappear. At the end, after setting up a good grid, I selected threshold 1. By averaging last 10 frames, we also have a problem of heatmap drifting. Heatmap is constructed from history, so mean will always be something like 5 frames behind the car itself. 
+The final heatmap was constructed by averaging the whole history of frames, then using gaussian blur with kernel size of 15. Finally, the blurred heatmap was thresholded again. Main problem of this pipeline section was to come with good threshold. You can have a lot of multiple detections on the vehicle in front of us, but just a few on the vehicle in distance. If you have small threshold, the car in the distance is detected fine, but car in front of us will have a big bounding box. If the threshold is big, a car in the distance can disappear. At the end, after setting up a good grid, I selected threshold 1. By averaging last 10 frames, we also have a problem of heatmap drifting. Heatmap is constructed from history, so mean will always be something like 5 frames behind the car itself. I also encountered problem to getting false positive if, there are two cars very close. Heatmap can divide into more than two regions.
 
 ![heatmap][heatmap]
 
@@ -150,7 +150,7 @@ Averaged heatmap is converted into labels - cars. Each bounding box was created 
 
 
 # 7. Final run 
-The final run can be seen in the video.mp4 file. 
+The final run can be seen in the outputs/output_video.mp4 file. 
 Even validation accuracy was high for both type of classifiers, real settings show that CNN works much better than network with HoG features. Since I had a big problem to tune HoG classifier in real settings, final video was created with CNN network. 
 
 [![Watch the video]](https://github.com/batrlatom/udacityP5/blob/master/outputs/output_video.mp4)
